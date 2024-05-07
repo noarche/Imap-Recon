@@ -1,0 +1,22 @@
+{
+  "imapdomains":[
+    "",
+    "imap.",
+    "mail",
+    "pop.",
+    "pop3.",
+    "email.",
+    "mx.",
+    "webmail.",
+    "inbound.",
+    "imaps.",
+    "id.",
+    "apps.",
+    "login.",
+    "wm.",
+    "m.",
+    "mobile.",
+    "incoming.",
+    "imap.mail."
+  ]
+}
