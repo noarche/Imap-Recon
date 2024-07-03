@@ -1,6 +1,6 @@
 # About
 
-This script looks at a wordlist of Email:password and deletes over 1500 known temp-email domains. It then trys to locate the Imap server for the domains left. If a imap server for that domain is located the script will try to login via imap and if successful a hit will be logged in your results text file. 
+This script looks at a Email:password wordlist and deletes 1500+ known temp-email domains. Then attempts to locate the Imap server for the domains remaining. If a imap server responds the script will try to login via imap; if successful a hit will be logged in your results text file.
 
 # Disclaimer
 
