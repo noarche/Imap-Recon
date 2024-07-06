@@ -13,12 +13,19 @@
          ----------------------------------------
 
                   *** LEGAL NOTICES ***
+                   *** DISCLAIMER ***
 
-Recon V3 has been created for educational purposes only.
-It shall not be used for any kind of illegal activity nor
-law enforcement at any time. This applies to all cases of
-usage, no matter whether the code as a whole or just parts
-of it are being used.
+The information and/or software provided here is intended solely
+for educational purposes and legal penetration testing purposes. 
+By accessing or using this information and/or software, you 
+acknowledge and agree that you assume full responsibility for your
+actions and any consequences that may result from those actions. 
+The creators, contributors, and providers of this information 
+and/or software shall not be held liable for any misuse or damage
+arising from its application. It is your responsibility to ensure 
+that your use complies with all applicable laws and regulations. 
+This applies to all cases ofusage, no matter whether the code as 
+a whole or just parts of it are being used.
 
                    *** SHORT INFO ***
 
