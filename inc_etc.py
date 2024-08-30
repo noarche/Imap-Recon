@@ -37,7 +37,7 @@ def result(target_file, result_output):
     '''
     # create results directory if not exists:
     try:
-        os.makedirs('results')
+        os.makedirs('Results')
     except:
         pass
     # write output to given file:

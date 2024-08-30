@@ -142,7 +142,7 @@ def checker(checker_type, default_threads, default_timeout, default_email, combo
 
     try:
         # Load combos:
-        print('Step#1: Loading combos from file ...')
+        print('Step#1:\033[32m Loading combos from file ...\033[0m')
         try:
             combos = comboloader(combofile)
         except:
@@ -152,13 +152,13 @@ def checker(checker_type, default_threads, default_timeout, default_email, combo
         targets_left = targets_total
 
         if targets_total > 0:
-            print(f'Done! Amount of combos loaded: {targets_total}\n\n')
+            print(f'\033[34mDone! Amount of combos loaded: {targets_total}\033[0m\n\n')
         else:
             print('Done! No combos loaded.\n\n')
             return False
 
         # Start checker threads using ThreadPoolExecutor:
-        print(f'Step#2: Starting threads for {checker_type} checker ...')
+        print(f'Step#2:\033[32m Starting threads for {checker_type} checker ...\033[0m')
 
         with ThreadPoolExecutor(max_workers=default_threads) as executor:
             futures = {
@@ -225,7 +225,7 @@ def main():
         combofile = get_combofile_nogui()
 
         # Ask for starting the checker:
-        start_now = input('\n\nStart Checker = [y] or Exit = [n]: \033[0m')
+        start_now = input('\n\n\033[34mStart Checker = [y] or Exit = [n]: \033[0m')
 
         # Start checker for option "yes":
         if start_now in ['y', 'Y', 'yes', 'Yes']:
