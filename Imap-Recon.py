@@ -1,7 +1,6 @@
 #!/usr/local/opt/python@3.8/bin/python3
 # -*- coding: utf-8 -*-
 
-
 '''
 
 ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗    ██╗   ██╗ ██╗
@@ -12,6 +11,8 @@
 ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝      ╚═══╝   ╚═╝ 
          ----------------------------------------
 
+         Forked and upgraded from DrPython3/MailRipV3
+         
                   *** LEGAL NOTICES ***
                    *** DISCLAIMER ***
 
@@ -40,13 +41,13 @@ Further Information and Help at:
 
 import sys
 import threading
-import inc_attackimap as ic
-import inc_attacksmtp as sc
+import dns.resolver
 from queue import Queue
 from time import sleep
+import inc_attackimap as ic
+import inc_attacksmtp as sc
 from inc_comboloader import comboloader
-from inc_etc import clean
-from inc_etc import get_combofile_nogui
+from inc_etc import clean, get_combofile_nogui
 
 # [VARIOUS]
 # ---------
@@ -83,6 +84,24 @@ checker_queue = Queue()
 # [FUNCTIONS]
 # -----------
 
+def dns_lookup(domain):
+    '''
+    Function to perform a DNS lookup using dnspython.
+
+    :param str domain: Domain to perform DNS lookup on.
+    :return: List of IP addresses associated with the domain.
+    '''
+    try:
+        result = dns.resolver.resolve(domain, 'A')
+        return [ip.to_text() for ip in result]
+    except dns.resolver.NoAnswer:
+        return []
+    except dns.resolver.NXDOMAIN:
+        return []
+    except Exception as e:
+        print(f"DNS lookup error: {e}")
+        return []
+
 def checker_thread(checker_type, default_timeout, default_email):
     '''
     Function for a single thread which performs the main checking process.
@@ -92,11 +111,8 @@ def checker_thread(checker_type, default_timeout, default_email):
     :param str default_email: user's email for test messages (SMTP only)
     :return: None
     '''
-    # set variables:
-    global targets_left
-    global hits
-    global fails
-    # start thread for chosen checker type:
+    global targets_left, hits, fails
+
     while True:
         target = str(checker_queue.get())
         result = False
@@ -136,9 +152,7 @@ def checker(checker_type, default_threads, default_timeout, default_email, combo
     :param str combofile: textfile with combos to import
     :return: True (no errors occurred), False (errors occurred)
     '''
-    # set variables:
-    global targets_total
-    global targets_left
+    global targets_total, targets_left
     combos_available = False
     try:
         # load combos:
@@ -160,7 +174,7 @@ def checker(checker_type, default_threads, default_timeout, default_email, combo
             for _ in range(default_threads):
                 single_thread = threading.Thread(
                     target=checker_thread,
-                    args=(str(f'{checker_type}'),default_timeout,default_email),
+                    args=(str(f'{checker_type}'), default_timeout, default_email),
                     daemon=True
                 )
                 single_thread.start()
@@ -300,10 +314,7 @@ def main():
         input()
     sys.exit()
 
-    clock.tick(20)
-
 # [MAIN]
 # ------
 
 main()
-
