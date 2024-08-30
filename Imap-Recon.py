@@ -11,8 +11,6 @@
 ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝      ╚═══╝   ╚═╝ 
          ----------------------------------------
 
-         Forked and upgraded from DrPython3/MailRipV3
-         
                   *** LEGAL NOTICES ***
                    *** DISCLAIMER ***
 
@@ -41,6 +39,7 @@ Further Information and Help at:
 
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import dns.resolver
 from queue import Queue
 from time import sleep
@@ -74,10 +73,10 @@ main_logo = '''
 '''
 
 # global variables and stuff:
-targets_total = int(0)
-targets_left = int(0)
-hits = int(0)
-fails = int(0)
+targets_total = 0
+targets_left = 0
+hits = 0
+fails = 0
 
 checker_queue = Queue()
 
@@ -102,44 +101,31 @@ def dns_lookup(domain):
         print(f"DNS lookup error: {e}")
         return []
 
-def checker_thread(checker_type, default_timeout, default_email):
+def process_target(checker_type, target, default_timeout, default_email):
     '''
-    Function for a single thread which performs the main checking process.
+    Process a single target using the specified checker.
 
     :param str checker_type: smtp or imap
+    :param str target: the target to check
     :param float default_timeout: timeout for server connection
     :param str default_email: user's email for test messages (SMTP only)
-    :return: None
+    :return: bool, True if successful, False otherwise
     '''
-    global targets_left, hits, fails
-
-    while True:
-        target = str(checker_queue.get())
-        result = False
-        try:
-            if checker_type == 'smtp':
-                result = sc.smtpchecker(
-                    float(default_timeout),
-                    str(default_email),
-                    str(f'{target}')
-                )
-            elif checker_type == 'imap':
-                result = ic.imapchecker(
-                    float(default_timeout),
-                    str(f'{target}')
-                )
-        except:
-            pass
-        # update stats:
-        if result == True:
-            hits += 1
-        else:
-            fails += 1
-        targets_left -= 1
-        checker_queue.task_done()
-    # cooldown for checker thread:
-    sleep(3.0)
-    return None
+    try:
+        if checker_type == 'smtp':
+            return sc.smtpchecker(
+                float(default_timeout),
+                str(default_email),
+                str(target)
+            )
+        elif checker_type == 'imap':
+            return ic.imapchecker(
+                float(default_timeout),
+                str(target)
+            )
+    except Exception as e:
+        print(f"Error processing target {target}: {e}")
+    return False
 
 def checker(checker_type, default_threads, default_timeout, default_email, combofile):
     '''
@@ -152,56 +138,54 @@ def checker(checker_type, default_threads, default_timeout, default_email, combo
     :param str combofile: textfile with combos to import
     :return: True (no errors occurred), False (errors occurred)
     '''
-    global targets_total, targets_left
-    combos_available = False
+    global targets_total, targets_left, hits, fails
+
     try:
-        # load combos:
+        # Load combos:
         print('Step#1: Loading combos from file ...')
         try:
             combos = comboloader(combofile)
         except:
             combos = []
+
         targets_total = len(combos)
         targets_left = targets_total
+
         if targets_total > 0:
-            combos_available = True
-            print(f'Done! Amount of combos loaded: {str(targets_total)}\n\n')
+            print(f'Done! Amount of combos loaded: {targets_total}\n\n')
         else:
             print('Done! No combos loaded.\n\n')
-        # start checker threads:
-        if combos_available == True:
-            print(f'Step#2: Starting threads for {checker_type} checker ...')
-            for _ in range(default_threads):
-                single_thread = threading.Thread(
-                    target=checker_thread,
-                    args=(str(f'{checker_type}'), default_timeout, default_email),
-                    daemon=True
-                )
-                single_thread.start()
-            # fill queue with combos:
-            for target in combos:
-                checker_queue.put(target)
-            print('Done! Checker started and running - see stats in window title. L H F represents the number of Combos Left, Hits, and Failed attempts.n\n')
-            # checker stats in window title:
-            while targets_left > 0:
-                try:
-                    sleep(1.0)
-                    titlestats = str(f'L:{str(targets_left)} # H:{str(hits)} # F:{str(fails)}')
-                    sys.stdout.write('\33]0;' + titlestats + '\a')
-                    sys.stdout.flush()
-                except:
-                    pass
-            # finish checker:
-            print('Step#3: Finishing checking ...')
-            checker_queue.join()
-            print('Done!\n\n')
-            sleep(3.0)
-        else:
-            print('Press [ENTER] and try again, please!')
-            input()
+            return False
+
+        # Start checker threads using ThreadPoolExecutor:
+        print(f'Step#2: Starting threads for {checker_type} checker ...')
+
+        with ThreadPoolExecutor(max_workers=default_threads) as executor:
+            futures = {
+                executor.submit(process_target, checker_type, target, default_timeout, default_email): target
+                for target in combos
+            }
+
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    hits += 1
+                else:
+                    fails += 1
+                targets_left -= 1
+                # Update stats in window title:
+                titlestats = f'L:{targets_left} # H:{hits} # F:{fails}'
+                sys.stdout.write('\33]0;' + titlestats + '\a')
+                sys.stdout.flush()
+
+        print('Step#3: Finishing checking ...')
+        print('Done!\n\n')
+
         clean()
         return True
-    except:
+
+    except Exception as e:
+        print(f"Checker encountered an error: {e}")
         clean()
         return False
 
@@ -211,42 +195,39 @@ def main():
 
     :return: None
     '''
-    # set default values for needed variables:
-    default_timeout = float(3.0)
-    default_threads = int(5)
-    default_email = str('user@email.com')
-    combofile = str('combos.txt')
-    checker_type = str('smtp')
+    # Set default values for needed variables:
+    default_timeout = 3.0
+    default_threads = 5
+    default_email = 'user@email.com'
+    combofile = 'combos.txt'
+    checker_type = 'smtp'
+
     clean()
     print(main_logo + '\n\n')
-    # get values for variables from user input:
+
+    # Get values for variables from user input:
     try:
-        # type of checking (SMTP / IMAP):
-        checker_choice = int(
-            input('Checker Type [1 = smtp or 2 = imap]: ')
-        )
+        # Type of checking (SMTP / IMAP):
+        checker_choice = int(input('Checker Type [1 = smtp or 2 = imap]: '))
         if checker_choice == 2:
             checker_type = 'imap'
         if checker_choice == 1:
-            # (SMTP only) user's email address for testmailer:
-            default_email = str(
-                input('Your Email [e.g. your@email.com]: ')
-            )
-        # threads to use:
-        default_threads = int(
-            input('\033[34mChecker Threads [e.g. 10]: \033[0m')
-        )
-        # default timeout for connections:
-        default_timeout = float(
-            input('\033[34mChecker Timeout in Seconds [e.g. 1.8]: \033[0m')
-        )
-        # start open-file-dialog using tkinter:
+            # (SMTP only) user's email address for test mailer:
+            default_email = input('Your Email [e.g. your@email.com]: ')
+
+        # Threads to use:
+        default_threads = int(input('\033[34mChecker Threads [e.g. 10]: \033[0m'))
+
+        # Default timeout for connections:
+        default_timeout = float(input('\033[34mChecker Timeout in Seconds [e.g. 1.8]: \033[0m'))
+
+        # Start open-file-dialog using tkinter:
         combofile = get_combofile_nogui()
-        # ask for starting the checker:
-        start_now = str(
-            input('\n\nStart Checker = [y] or Exit = [n]: \033[0m')
-        )
-        # start checker for option "yes":
+
+        # Ask for starting the checker:
+        start_now = input('\n\nStart Checker = [y] or Exit = [n]: \033[0m')
+
+        # Start checker for option "yes":
         if start_now in ['y', 'Y', 'yes', 'Yes']:
             clean()
             print(
@@ -254,8 +235,8 @@ def main():
                 + f'Recon V1 - running ({checker_type}) checker:\n'
                 + 38*'-' + '\n\n'
                 + f'user email: {default_email}\n'
-                + f'threads:    {str(default_threads)}\n'
-                + f'timeout:    {str(default_timeout)}\n\n'
+                + f'threads:    {default_threads}\n'
+                + f'timeout:    {default_timeout}\n\n'
                 + 38*'-' + '\n'
             )
             print(
@@ -265,29 +246,24 @@ def main():
                 + '    (LTC) address ltc1qu7ze2hlnkh440k37nrm4nhpv2dre7fl8xu0egx\n\n'
             )
             print('\033[34mPlease be patient and wait while all combos are being checked ...\n\n\033[0m')
-            checker_result = checker(
-                str(checker_type),
-                int(default_threads),
-                float(default_timeout),
-                str(default_email),
-                str(combofile)
-            )
-            # show summary and quit:
-            if checker_result == True:
+            checker_result = checker(checker_type, default_threads, default_timeout, default_email, combofile)
+
+            # Show summary and quit:
+            if checker_result:
                 print(
                     '\n\n'
                     + f'Recon V1 - ({checker_type}) checker results:\n'
                     + 38*'-' + '\n\n'
-                    + f'combos:    {str(targets_total)}\n'
-                    + f'hits:      {str(hits)}\n'
-                    + f'fails:     {str(fails)}\n\n'
+                    + f'combos:    {targets_total}\n'
+                    + f'hits:      {hits}\n'
+                    + f'fails:     {fails}\n\n'
                     + 38*'-' + '\n'
                 )
                 print(
                     'Tip or donate for faster development:\n\n'
-                + '    (BTC) address bc1qnpjpacyl9sff6r4kfmn7c227ty9g50suhr0y9j\n'
-                + '    (ETH) address 0x94FcBab18E4c0b2FAf5050c0c11E056893134266\n'
-                + '    (LTC) address ltc1qu7ze2hlnkh440k37nrm4nhpv2dre7fl8xu0egx\n\n'
+                    + '    (BTC) address bc1qnpjpacyl9sff6r4kfmn7c227ty9g50suhr0y9j\n'
+                    + '    (ETH) address 0x94FcBab18E4c0b2FAf5050c0c11E056893134266\n'
+                    + '    (LTC) address ltc1qu7ze2hlnkh440k37nrm4nhpv2dre7fl8xu0egx\n\n'
                 )
                 print('Press [ENTER] to exit ...')
                 input()
@@ -301,14 +277,15 @@ def main():
                 )
                 input()
                 clean()
-        # exit for option "no":
+        # Exit for option "no":
         elif start_now in ['n', 'N', 'no', 'No']:
             clean()
         else:
             clean()
             print('\n\n*** SORRY ***\nSomething went wrong. Press [ENTER] and try again, please!\n')
             input()
-    except:
+    except Exception as e:
+        print(f"Main encountered an error: {e}")
         clean()
         print('\n\n*** SORRY ***\nAn error occurred. Press [ENTER] and try again, please!\n')
         input()
