@@ -1,17 +1,15 @@
 #!/usr/local/opt/python@3.8/bin/python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'DrPython3'
-__date__ = '2021-12-04'
-__version__ = '2.5'
-__contact__ = 'https://github.com/DrPython3'
+__author__ = 'D'
+__date__ = 'D'
+__version__ = 'D'
+__contact__ = 'D'
 
 '''
 ----------------------------------------------------------
 Functions for Sending Test Messages with found SMTP Logins
 ----------------------------------------------------------
-
-Part of << Mail.Rip V3: https://github.com/DrPython3/MailRipV3 >>
 '''
 
 # [IMPORTS]
@@ -84,7 +82,7 @@ def mailer(default_email, target_email, target_host, target_port, target_user, t
                 f'Test Message ID{random_id}'
             )
             letter_firstline = str(
-                'thank you for using mailrip by drpython3.'
+                'thank you for using imap-recon.'
             )
             letter_secondline = str(
                 'the following smtp account was found.'
@@ -142,4 +140,4 @@ def mailer(default_email, target_email, target_host, target_port, target_user, t
     except:
         return False
 
-# DrPython3 (C) 2021 @ GitHub.com
+

@@ -1,17 +1,15 @@
 #!/usr/local/opt/python@3.8/bin/python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'DrPython3'
-__date__ = '2021-12-04'
+__author__ = 'D'
+__date__ = 'D'
 __version__ = '1.1'
-__contact__ = 'https://github.com/DrPython3'
+__contact__ = 'D'
 
 '''
 --------------------------------------------
 Functions for Reading MX Records of a Domain
 --------------------------------------------
-
-Part of << Mail.Rip V3: https://github.com/DrPython3/MailRipV3 >>
 '''
 
 # [IMPORTS]
@@ -39,8 +37,8 @@ def get_host(default_timeout, email):
     smtp_host = str('none')
     smtp_domain = str(email.split('@')[1])
     get_records = dns.resolver.Resolver(configure=False)
-    # using Google DNS, replace on purpose:
-    get_records.nameservers = ['8.8.8.8']
+    # using OpenDNS DNS, replace on purpose:
+    get_records.nameservers = ['208.67.222.222']
     records = get_records.resolve(smtp_domain, 'MX')
     counter = 0
     # extract host from records:
@@ -57,4 +55,4 @@ def get_host(default_timeout, email):
             break
     return found, smtp_host
 
-# DrPython3 (C) 2021 @ GitHub.com
+
