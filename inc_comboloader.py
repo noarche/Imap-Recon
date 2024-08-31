@@ -68,7 +68,7 @@ def comboloader(input_file):
 
     try:
         with open(input_file, 'r') as file:
-            with ThreadPoolExecutor(max_workers=100) as executor:
+            with ThreadPoolExecutor(max_workers=250) as executor:
                 # Submit each line to the thread pool
                 futures = [executor.submit(process_combo, line, loaded_combos, output_blacklist, output_clean) for line in file]
 
