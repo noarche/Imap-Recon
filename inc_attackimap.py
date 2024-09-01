@@ -1,3 +1,28 @@
+# Disclaimer:
+# This code/script/application/program is solely for educational and learning purposes.
+# All information, datasets, images, code, and materials are presented in good faith and
+# intended for instructive use. However, noarche make no representation or warranty, 
+# express or implied, regarding the accuracy, adequacy, validity, reliability, availability,
+# or completeness of any data or associated materials.
+# Under no circumstance shall noarche have any liability to you for any loss, damage, or 
+# misinterpretation arising due to the use of or reliance on the provided data. Your utilization
+# of the code and your interpretations thereof are undertaken at your own discretion and risk.
+#
+# By executing script/code/application, the user acknowledges and agrees that they have read, 
+# understood, and accepted the terms and conditions (or any other relevant documentation or 
+#policy) as provided by noarche.
+#
+#Visit https://github.com/noarche for more information. 
+#
+#  _.··._.·°°°·.°·..·°¯°·._.··._.·°¯°·.·° .·°°°°·.·°·._.··._
+# ███╗   ██╗ ██████╗  █████╗ ██████╗  ██████╗██╗  ██╗███████╗
+# ████╗  ██║██╔═══██╗██╔══██╗██╔══██╗██╔════╝██║  ██║██╔════╝
+# ██╔██╗ ██║██║   ██║███████║██████╔╝██║     ███████║█████╗  
+# ██║╚██╗██║██║   ██║██╔══██║██╔══██╗██║     ██╔══██║██╔══╝  
+# ██║ ╚████║╚██████╔╝██║  ██║██║  ██║╚██████╗██║  ██║███████╗
+# ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝
+# °°°·._.··._.·°°°·.°·..·°¯°··°¯°·.·°.·°°°°·.·°·._.··._.·°°°
+
 #!/usr/local/opt/python@3.8/bin/python3
 # -*- coding: utf-8 -*-
 
@@ -254,3 +279,29 @@ def imapchecker(default_timeout, target):
         return False
 
 # DrPython3 (C) 2021 @ GitHub.com
+
+
+# Disclaimer:
+# This code/script/application/program is solely for educational and learning purposes.
+# All information, datasets, images, code, and materials are presented in good faith and
+# intended for instructive use. However, noarche make no representation or warranty, 
+# express or implied, regarding the accuracy, adequacy, validity, reliability, availability,
+# or completeness of any data or associated materials.
+# Under no circumstance shall noarche have any liability to you for any loss, damage, or 
+# misinterpretation arising due to the use of or reliance on the provided data. Your utilization
+# of the code and your interpretations thereof are undertaken at your own discretion and risk.
+#
+# By executing script/code/application, the user acknowledges and agrees that they have read, 
+# understood, and accepted the terms and conditions (or any other relevant documentation or 
+#policy) as provided by noarche.
+#
+#Visit https://github.com/noarche for more information. 
+#
+#  _.··._.·°°°·.°·..·°¯°·._.··._.·°¯°·.·° .·°°°°·.·°·._.··._
+# ███╗   ██╗ ██████╗  █████╗ ██████╗  ██████╗██╗  ██╗███████╗
+# ████╗  ██║██╔═══██╗██╔══██╗██╔══██╗██╔════╝██║  ██║██╔════╝
+# ██╔██╗ ██║██║   ██║███████║██████╔╝██║     ███████║█████╗  
+# ██║╚██╗██║██║   ██║██╔══██║██╔══██╗██║     ██╔══██║██╔══╝  
+# ██║ ╚████║╚██████╔╝██║  ██║██║  ██║╚██████╗██║  ██║███████╗
+# ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝
+# °°°·._.··._.·°°°·.°·..·°¯°··°¯°·.·°.·°°°°·.·°·._.··._.·°°°
