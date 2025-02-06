@@ -43,16 +43,9 @@ a whole or just parts of it are being used.
 
 ![noarche's GitHub stats](https://github-readme-stats.vercel.app/api?username=noarche&show_icons=true&theme=transparent)
 
-# ꧁꧂  Docker Image 🪅
-
-`docker pull torquetraction/imap-recon:latest`
-
-`docker run -it torquetraction/imap-recon`
-
-[Download Docker Image](https://hub.docker.com/repository/docker/torquetraction/imap-recon/general)
 
 
-# Looking for a Combolist tool?
+# Looking for a Combolist tool?🪅
 
 Check out my all in one wordlist manipulator. Many useful combo tools. 
 
