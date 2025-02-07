@@ -130,6 +130,15 @@ def main():
     lines_processed = 0
     total_lines = sum(1 for _ in open(args.combo, "r"))
 
+    def print_progress():
+        while threading.active_count() > 1:
+            print(f"\rChecked: {lines_processed}/{total_lines}", end="")
+            time.sleep(1)
+        print(f"\rChecked: {lines_processed}/{total_lines}", end="")  # Final update
+
+    progress_thread = threading.Thread(target=print_progress)
+    progress_thread.start()
+
     with open(args.combo, "r") as f:
         for line_number, line in enumerate(f, 1):
             parts = line.strip().split(":")
@@ -151,6 +160,8 @@ def main():
     # Wait for all threads to finish
     for thread in threads:
         thread.join()
+
+    progress_thread.join()
 
 if __name__ == "__main__":
     main()
