@@ -12,7 +12,7 @@ import argparse
 IMAP_SUBDOMAINS_FILE = "imapsubdomains.txt"  # Possible IMAP addresses. The most common have been added for a great speed:discovery ratio.
 VALID_HITS_FILE = "imap_valid_hits.txt"  # Valid results will be here. As of now there is no capture features, I plan to add in the future.
 CONFIG_FILE = "imap_config.ini"  # This file auto-updates the more you run the script, and becomes faster as it gains more known servers.
-TIMEOUT = 3  # seconds
+TIMEOUT = .7  # seconds
 MAX_THREADS = 240  # Adjust as needed
 VERBOSE = "-v" in sys.argv  # Check if verbose mode is enabled
 CONFIG_LOAD_INTERVAL = 30  # Reload config.ini every 30 lines.
