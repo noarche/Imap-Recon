@@ -12,10 +12,10 @@ import argparse
 IMAP_SUBDOMAINS_FILE = "imapsubdomains.txt"  # Possible IMAP addresses. The most common have been added for a great speed:discovery ratio.
 VALID_HITS_FILE = "imap_valid_hits.txt"  # Valid results will be here. As of now there is no capture features, I plan to add in the future.
 CONFIG_FILE = "imap_config.ini"  # This file auto-updates the more you run the script, and becomes faster as it gains more known servers.
-TIMEOUT = .7  # seconds
+TIMEOUT = .6  # seconds
 MAX_THREADS = 240  # Adjust as needed
 VERBOSE = "-v" in sys.argv  # Check if verbose mode is enabled
-CONFIG_LOAD_INTERVAL = 30  # Reload config.ini every 30 lines.
+CONFIG_LOAD_INTERVAL = 130  # Reload config.ini every 130 lines.
 PROXY_LIST_PATH = "imap_socks5.txt"  # Path to the proxy list file (hardcoded)
 
 # Argument parser
@@ -64,6 +64,13 @@ def save_config(domain, imap_server):
     if 'IMAP' not in config:
         config['IMAP'] = {}
     
+    # Skip saving if the IMAP server for the domain already exists in the section
+    if domain in config['IMAP']:
+        if VERBOSE:
+            print(f"[DEBUG] Skipping {domain}: {imap_server} (already in config)")
+        return
+
+    # Only add the IMAP server if the domain is not already listed
     config['IMAP'][domain] = imap_server
     
     with open(CONFIG_FILE, "w") as configfile:
@@ -145,7 +152,7 @@ def main():
             if len(parts) == 2:
                 email, password = parts
 
-                # Reload config every 50 lines
+                # Reload config every 130 lines
                 if lines_processed % CONFIG_LOAD_INTERVAL == 0:
                     config = load_config()
                 
