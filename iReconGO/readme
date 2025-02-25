@@ -1,0 +1,87 @@
+# Type commands into terminal in order:
+
+open terminal and cd to root dir of script. Run the following commands: 
+
+go mod init irgo
+
+go mod tidy
+
+go get github.com/emersion/go-imap github.com/emersion/go-imap/client golang.org/x/net/proxy github.com/fatih/color
+
+
+
+
+# Running the Script
+
+### Basic Usage (No Proxy, Default Configs)
+
+go run irec.go -c /path/to/combo.txt
+
+### Use a Proxy List (Default ./src/proxies.txt)
+
+go run irec.go -c /path/to/combo.txt -p
+
+### Use a Custom Proxy List
+
+go run irec.go -c /path/to/combo.txt -p /path/to/proxies.txt
+
+### Set Timeout (e.g., 5000ms) & Threads (e.g., 20)
+
+go run irec.go -c /path/to/combo.txt -d 5000 -t 20
+
+### Search Inbox for a Keyword & Specific Sender
+
+go run irec.go -c /path/to/combo.txt -k "Reset Password" -s "no-reply@service.com"
+
+### Show Help Menu
+
+go run irec.go -h
+
+### Build a Standalone Executable 📌
+
+go build -o irgo irec.go
+
+### Then run it:
+
+./irgo -c /path/to/combo.txt
+
+
+## ABOUT RESULTS:
+
+Stores valid credentials along with mailbox statistics.
+
+user2@hotmail.com:qwerty2024 50 20
+
+If -k (keyword search) or -s (sender search) is used, it also stores search results:
+
+user2@hotmail.com:qwerty2024 50 20 5 2
+
+(meaning 5 emails matched the keyword, 2 emails were from the specified sender).
+
+
+
+# Disclaimer
+
+The information and/or software provided here is intended solely
+for educational purposes and legal penetration testing purposes. 
+By accessing or using this information and/or software, you 
+acknowledge and agree that you assume full responsibility for your
+actions and any consequences that may result from those actions. 
+The creators, contributors, and providers of this information 
+and/or software shall not be held liable for any misuse or damage
+arising from its application. It is your responsibility to ensure 
+that your use complies with all applicable laws and regulations. 
+This applies to all cases of usage, no matter whether the code as 
+a whole or just parts of it are being used.
+
+
+-------------------------------------------------------------------
+## Support
+
+#  Buy me a coffee ☕
+
+# Looking for a Combolist tool?🪅
+
+# Need Proxylist?
+
+# Need easy dork generator? 
