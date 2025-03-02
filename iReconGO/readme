@@ -2,7 +2,7 @@
 
 open terminal and cd to root dir of script. Run the following commands: 
 
-go mod init irgo
+go mod init imap_checker
 
 go mod tidy
 
@@ -15,35 +15,35 @@ go get github.com/emersion/go-imap github.com/emersion/go-imap/client golang.org
 
 ### Basic Usage (No Proxy, Default Configs)
 
-go run irec.go -c /path/to/combo.txt
+go run imap_checker.go -c /path/to/combo.txt
 
 ### Use a Proxy List (Default ./src/proxies.txt)
 
-go run irec.go -c /path/to/combo.txt -p
+go run imap_checker.go -c /path/to/combo.txt -p
 
 ### Use a Custom Proxy List
 
-go run irec.go -c /path/to/combo.txt -p /path/to/proxies.txt
+go run imap_checker.go -c /path/to/combo.txt -p /path/to/proxies.txt
 
 ### Set Timeout (e.g., 5000ms) & Threads (e.g., 20)
 
-go run irec.go -c /path/to/combo.txt -d 5000 -t 20
+go run imap_checker.go -c /path/to/combo.txt -d 5000 -t 20
 
 ### Search Inbox for a Keyword & Specific Sender
 
-go run irec.go -c /path/to/combo.txt -k "Reset Password" -s "no-reply@service.com"
+go run imap_checker.go -c /path/to/combo.txt -k "Reset Password" -s "no-reply@service.com"
 
 ### Show Help Menu
 
-go run irec.go -h
+go run imap_checker.go -h
 
 ### Build a Standalone Executable 📌
 
-go build -o irgo irec.go
+go build -o irgo irgo.go
 
 ### Then run it:
 
-./irgo -c /path/to/combo.txt
+./imap_checker -c /path/to/combo.txt
 
 
 ## ABOUT RESULTS:
