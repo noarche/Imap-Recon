@@ -1,0 +1,4 @@
+Type the body of email to send here. 
+
+It will be shown in email exactly as shown here.
+
