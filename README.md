@@ -1,6 +1,6 @@
 # About
 
-`IRGO ||
+`iReconGO ||
 Email Access Combo Checker Written in GO. Very Fast. MultiThreaded.
 This script looks at a Email:password wordlist Then attempts to locate the Imap server for the domains remaining. If a imap server responds the script will try to login via imap; if successful a hit will be logged in your results text file.
 `
