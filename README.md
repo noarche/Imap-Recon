@@ -1,22 +1,22 @@
 # About
 
-`IRGO.
+`IRGO ||
 Email Access Combo Checker Written in GO. Very Fast. MultiThreaded.
 This script looks at a Email:password wordlist Then attempts to locate the Imap server for the domains remaining. If a imap server responds the script will try to login via imap; if successful a hit will be logged in your results text file.
 `
 
 `
-Imap.CheckMail
+Imap.CheckMail  ||
 Download mail from list of accounts, search by keyword, sender, folder. Written in Py, Slow 1 thread but works well.
 `
 
 `
-Mail.Client
+Mail.Client  ||
 Fetch headers for accounts very fast, search by keyword or sender. Written in GO, very fast, multithreaded.
 `
 
 `
-Smtp.Mailer
+Smtp.Mailer ||
 Exactly what it sounds like, Mass email people written in py. 1 thread. Very slow but works.
 `
 
