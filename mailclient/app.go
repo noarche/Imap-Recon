@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/emersion/go-imap"
@@ -67,25 +68,55 @@ func promptUserForConfig() string {
 		log.Fatalf(Red + "No configuration files found in './configs/' directory." + Reset)
 	}
 
-	fmt.Println(Bold + Cyan + "Available Configurations:" + Reset)
-	for i, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".ini") {
-			fmt.Printf("[%d] %s\n", i+1, file.Name())
-		}
-	}
+	pageSize := 30
+	totalFiles := len(files)
+	page := 0
 
-	var choice int
 	for {
-		fmt.Print(Bold + Magenta + "Select a configuration file by number: " + Reset)
-		_, err := fmt.Scan(&choice)
-		if err != nil || choice < 1 || choice > len(files) {
+		start := page * pageSize
+		end := start + pageSize
+		if end > totalFiles {
+			end = totalFiles
+		}
+
+		fmt.Println(Bold + Cyan + "Available Configurations:" + Reset)
+		for i := start; i < end; i++ {
+			if !files[i].IsDir() && strings.HasSuffix(files[i].Name(), ".ini") {
+				fmt.Printf("[%d] %s\n", i+1, files[i].Name())
+			}
+		}
+
+		if end < totalFiles {
+			fmt.Println(Bold + Yellow + "[n] Next page" + Reset)
+		}
+		if page > 0 {
+			fmt.Println(Bold + Yellow + "[p] Previous page" + Reset)
+		}
+
+		fmt.Println(Bold + Yellow + "[q] Quit" + Reset)
+
+		var input string
+		fmt.Print(Bold + Magenta + "Select a configuration file by number or navigate: " + Reset)
+		fmt.Scan(&input)
+
+		if input == "n" && end < totalFiles {
+			page++
+			continue
+		} else if input == "p" && page > 0 {
+			page--
+			continue
+		} else if input == "q" {
+			log.Fatalf(Red + "User exited configuration selection." + Reset)
+		}
+
+		choice, err := strconv.Atoi(input)
+		if err != nil || choice < 1 || choice > totalFiles {
 			fmt.Println(Red + "Invalid choice. Please try again." + Reset)
 			continue
 		}
-		break
-	}
 
-	return filepath.Join("./configs/", files[choice-1].Name())
+		return filepath.Join("./configs/", files[choice-1].Name())
+	}
 }
 
 func fetchEmails(emailAccount EmailAccount) ([]*imap.Message, error) {
