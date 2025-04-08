@@ -1,0 +1,3 @@
+place all lines in this file or multiple files in this dir. all should have format 
+EMAIL1:PASS1
+EMAIL2:PASS2
