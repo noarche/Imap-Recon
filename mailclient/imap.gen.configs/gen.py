@@ -26,20 +26,6 @@ def list_account_files():
         exit(1)
     return files
 
-def prompt_user_for_account_file(files):
-    print(Fore.CYAN + "\nAvailable account files:")
-    for i, file in enumerate(files, start=1):
-        print(Fore.YELLOW + f"{i}. {file}")
-    while True:
-        try:
-            choice = int(input(Fore.GREEN + "Select a file by number: "))
-            if 1 <= choice <= len(files):
-                return os.path.join(ACCOUNTS_DIR, files[choice - 1])
-            else:
-                print(Fore.RED + "[ERROR] Invalid choice.")
-        except ValueError:
-            print(Fore.RED + "[ERROR] Please enter a number.")
-
 def find_in_imapdomains(domain):
     if not os.path.exists(IMAP_DOMAINS_FILE):
         print(Fore.RED + f"[ERROR] {IMAP_DOMAINS_FILE} not found.")
@@ -81,6 +67,11 @@ def create_ini_file(email, password, imap_host, smtp_host, index, verbose=False)
 
     os.makedirs(CONFIGS_DIR, exist_ok=True)
     filename = os.path.join(CONFIGS_DIR, f"{email}.ini")
+    if os.path.exists(filename):
+        if verbose:
+            print(Fore.YELLOW + f"[INFO] Skipping {filename} (already exists).")
+        return
+
     with open(filename, "w") as configfile:
         config.write(configfile)
 
@@ -111,12 +102,14 @@ def process_account_file(filename, verbose=False):
 def main():
     args = parse_args()
 
-    while True:
-        files = list_account_files()
-        selected_file = prompt_user_for_account_file(files)
-        process_account_file(selected_file, args.verbose)
+    files = list_account_files()
+    for file in files:
+        filepath = os.path.join(ACCOUNTS_DIR, file)
+        if args.verbose:
+            print(Fore.CYAN + f"[INFO] Processing file: {file}")
+        process_account_file(filepath, args.verbose)
 
-        print(Fore.CYAN + "\n[INFO] Returning to file selection...\n")
+    print(Fore.GREEN + "[DONE] All account files processed.")
 
 if __name__ == "__main__":
     main()
