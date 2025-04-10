@@ -216,26 +216,24 @@ def main():
     parser.add_argument('-sd', type=str, help='Search by sender and delete emails')
     parser.add_argument('-sa', action='store_true', help='Download all emails with attachments from Sent folder')
     parser.add_argument('-txt', action='store_true', help='Save emails as both HTML and text')
-    parser.add_argument('-a', type=str, help='Check a single account in the format EMAIL:PASS')
-    parser.add_argument('-c', type=str, default='imap.config.ini', help='Specify the IMAP config file (default: imap.config.ini)')  # New argument
+    parser.add_argument('-a', type=str, help='Specify a single account in the format email@address.com:password')
     args = parser.parse_args()
     
     accounts = []
     if args.a:
-        # Parse the single account argument
-        try:
-            email_address, password = args.a.split(':', 1)
-            accounts.append((email_address, password))
-        except ValueError:
-            print(Fore.RED + "[-] Invalid format for -a. Use EMAIL:PASS.")
+        # Parse the single account provided via -a
+        parts = args.a.split(':')
+        if len(parts) == 2:
+            accounts.append((parts[0], parts[1]))
+        else:
+            print(Fore.RED + "[-] Invalid account format. Use email@address.com:password.")
             return
     else:
-        # Load accounts from the configuration file
+        # Load accounts from the config file
         accounts = load_accounts('imap.parse.config.ini')
-    
-    if not accounts:
-        print(Fore.RED + "[-] No accounts found.")
-        return
+        if not accounts:
+            print(Fore.RED + "[-] No accounts found.")
+            return
     
     search_criterion = None
     save_dir = "./results"
@@ -258,7 +256,7 @@ def main():
     
     for email_address, password in accounts:
         domain = email_address.split('@')[-1]
-        imap_server, imap_port = get_imap_server(domain, args.c)  # Use the specified or default config file
+        imap_server, imap_port = get_imap_server(domain, 'imap.config.ini')
         if not imap_server:
             print(Fore.RED + f"[-] IMAP server not found for {email_address}.")
             continue
