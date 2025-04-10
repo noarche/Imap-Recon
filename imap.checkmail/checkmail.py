@@ -58,7 +58,7 @@ def search_mail(mail, search_criterion, verbose):
             return []
         email_ids = data[0].split()
         if verbose:
-            print(Fore.CYAN + f"[+] Found {len(email_ids)} emails.")
+            print(Fore.BLUE + f"[+] Found {len(email_ids)} emails.")
         return email_ids
     except Exception as e:
         print(Fore.RED + f"[-] Error searching emails: {e}")
@@ -66,10 +66,12 @@ def search_mail(mail, search_criterion, verbose):
 
 def delete_emails(mail, email_ids):
     try:
-        for email_id in email_ids:
+        total_emails = len(email_ids)
+        for idx, email_id in enumerate(email_ids, start=1):
             mail.store(email_id, '+FLAGS', '\\Deleted')
+            print(Fore.YELLOW + f"[{idx}/{total_emails} | {idx / total_emails * 100:.2f}%] Deleting email ID {email_id}")
         mail.expunge()
-        print(Fore.GREEN + f"[+] Deleted {len(email_ids)} emails.")
+        print(Fore.GREEN + f"[+] Deleted {total_emails} emails.")
     except Exception as e:
         print(Fore.RED + f"[-] Error deleting emails: {e}")
 
@@ -94,7 +96,7 @@ def extract_email_date(msg):
             pass
     return datetime.now().strftime('%Y%m%d_%H%M%S')
 
-def save_email(mail, email_id, save_path, save_as_text=False):
+def save_email(mail, email_id, save_path, save_as_text=False, idx=None, total=None):
     try:
         result, data = mail.fetch(email_id, '(RFC822)')
         if result != 'OK':
@@ -128,6 +130,9 @@ def save_email(mail, email_id, save_path, save_as_text=False):
             with open(text_file, 'w', encoding='utf-8') as f:
                 f.write(msg.as_string())
             print(Fore.GREEN + f"[+] Email saved as text: {text_file}")
+
+        if idx is not None and total is not None:
+            print(Fore.YELLOW + f"[{idx}/{total} | {idx / total * 100:.2f}%] Processed email ID {email_id}")
 
     except Exception as e:
         print(Fore.RED + f"[-] Error saving email ID {email_id}: {e}")
@@ -200,10 +205,12 @@ def process_sent_folder(mail, save_path, save_as_text=False):
             return
 
         email_ids = data[0].split()
-        print(Fore.CYAN + f"[+] Found {len(email_ids)} emails in Sent folder.")
+        total_emails = len(email_ids)
+        print(Fore.CYAN + f"[+] Found {total_emails} emails in Sent folder.")
 
-        for email_id in email_ids:
+        for idx, email_id in enumerate(email_ids, start=1):
             save_email_with_attachments(mail, email_id, save_path, save_as_text)
+            print(Fore.YELLOW + f"[{idx}/{total_emails} | {idx / total_emails * 100:.2f}%] Processed email ID {email_id}")
     except Exception as e:
         print(Fore.RED + f"[-] Error processing Sent folder: {e}")
 
@@ -235,6 +242,9 @@ def main():
             print(Fore.RED + "[-] No accounts found.")
             return
     
+    total_accounts = len(accounts)
+    print(Fore.CYAN + f"[+] Found {total_accounts} accounts to process.")
+
     search_criterion = None
     save_dir = "./results"
     delete_emails_flag = False
@@ -254,7 +264,8 @@ def main():
         print(Fore.RED + "[-] Must specify -s, -k, -sd, or -sa.")
         return
     
-    for email_address, password in accounts:
+    for idx, (email_address, password) in enumerate(accounts, start=1):
+        print(Fore.CYAN + f"[{idx}/{total_accounts} | {idx / total_accounts * 100:.2f}%] Processing account: {email_address}")
         domain = email_address.split('@')[-1]
         imap_server, imap_port = get_imap_server(domain, 'imap.config.ini')
         if not imap_server:
@@ -273,9 +284,10 @@ def main():
                 if delete_emails_flag:
                     delete_emails(mail, email_ids)
                 else:
-                    for email_id in email_ids:
+                    total_emails = len(email_ids)
+                    for idx_email, email_id in enumerate(email_ids, start=1):
                         try:
-                            save_email(mail, email_id, f"{save_dir}/{email_address}")
+                            save_email(mail, email_id, f"{save_dir}/{email_address}", args.txt, idx_email, total_emails)
                         except Exception as e:
                             print(Fore.RED + f"[-] Error processing email ID {email_id}: {e}")
         except Exception as e:
