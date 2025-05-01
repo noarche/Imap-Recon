@@ -58,6 +58,35 @@ func loadConfig(configFile string) {
 	}
 }
 
+func listMailboxes(account EmailAccount) ([]string, error) {
+	c, err := client.DialTLS(account.IMAPHost, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Logout()
+
+	if err := c.Login(account.Username, account.Password); err != nil {
+		return nil, err
+	}
+
+	mailboxes := make(chan *imap.MailboxInfo, 10)
+	done := make(chan error, 1)
+
+	go func() {
+		done <- c.List("", "*", mailboxes)
+	}()
+
+	var mailboxNames []string
+	for m := range mailboxes {
+		mailboxNames = append(mailboxNames, m.Name)
+	}
+
+	if err := <-done; err != nil {
+		return nil, err
+	}
+	return mailboxNames, nil
+}
+
 func promptUserForConfig() string {
 	files, err := os.ReadDir("./configs/")
 	if err != nil {
@@ -68,7 +97,7 @@ func promptUserForConfig() string {
 		log.Fatalf(Red + "No configuration files found in './configs/' directory." + Reset)
 	}
 
-	pageSize := 30
+	pageSize := 9000
 	totalFiles := len(files)
 	page := 0
 
@@ -119,7 +148,7 @@ func promptUserForConfig() string {
 	}
 }
 
-func fetchEmails(emailAccount EmailAccount) ([]*imap.Message, error) {
+func fetchEmails(emailAccount EmailAccount, folder string) ([]*imap.Message, error) {
 	c, err := client.DialTLS(emailAccount.IMAPHost, nil)
 	if err != nil {
 		return nil, err
@@ -130,7 +159,7 @@ func fetchEmails(emailAccount EmailAccount) ([]*imap.Message, error) {
 		return nil, err
 	}
 
-	mbox, err := c.Select("INBOX", false)
+	mbox, err := c.Select(folder, false) // <- use passed-in folder
 	if err != nil {
 		return nil, err
 	}
@@ -243,9 +272,44 @@ func handleUserInput(configName string) {
 			emailList = nil
 			for _, account := range accounts {
 				fmt.Println(Bold + "Fetching emails for: " + Cyan + account.Email + Reset)
-				emails, err := fetchEmails(account)
+				emails, err := fetchEmails(account, "INBOX")
 				if err != nil {
 					log.Println(Red+"Error fetching emails:"+Reset, err)
+					continue
+				}
+				emailList = append(emailList, emails...)
+			}
+			displayEmails()
+
+		case input == "sent":
+			fmt.Println(Yellow + "Searching for Sent folder..." + Reset)
+			emailList = nil
+			for _, account := range accounts {
+				folders, err := listMailboxes(account)
+				if err != nil {
+					log.Println(Red+"Error listing mailboxes:"+Reset, err)
+					continue
+				}
+
+				// Try to detect the correct "Sent" folder
+				var sentFolder string
+				for _, folder := range folders {
+					lower := strings.ToLower(folder)
+					if strings.Contains(lower, "sent") {
+						sentFolder = folder
+						break
+					}
+				}
+
+				if sentFolder == "" {
+					log.Println(Red + "No 'Sent' folder found for account: " + account.Email + Reset)
+					continue
+				}
+
+				fmt.Println(Bold + "Fetching emails from: " + Cyan + sentFolder + Reset)
+				emails, err := fetchEmails(account, sentFolder)
+				if err != nil {
+					log.Println(Red+"Error fetching sent emails:"+Reset, err)
 					continue
 				}
 				emailList = append(emailList, emails...)
@@ -313,7 +377,7 @@ func main() {
 
 	for _, account := range accounts {
 		fmt.Println(Bold + "Fetching emails for: " + Cyan + account.Email + Reset)
-		emails, err := fetchEmails(account)
+		emails, err := fetchEmails(account, "INBOX")
 		if err != nil {
 			log.Println(Red+"Error fetching emails:"+Reset, err)
 			continue
